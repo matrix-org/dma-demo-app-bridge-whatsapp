@@ -36,6 +36,8 @@ These features are not likely to be added to this *demo application*:
 
 Run Android Studio.
 
+<!-- You may need the [Preview Edition](https://developer.android.com/studio/preview/install-preview) of Android Studio to have this work. -->
+
 ## Support
 
 This is a demo. There is no support.

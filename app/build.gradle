@@ -60,12 +60,14 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation("com.github.auties00:whatsappweb4j:3.0.5")
+//    implementation("com.github.auties00:whatsappweb4j:3.0.5")
+//    implementation files('libraries/whatsappweb4j-3.1.jar')
     implementation(platform("com.squareup.okhttp3:okhttp-bom:4.10.0"))
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:okhttp-urlconnection")
     implementation("com.squareup.okhttp3:logging-interceptor")
     implementation files('libraries/matrix-rust-sdk-crypto.aar')
+    implementation files('libraries/whatsmeow.aar') // from https://github.com/turt2live/whatsmeow
     implementation 'net.java.dev.jna:jna:5.10.0@aar'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
