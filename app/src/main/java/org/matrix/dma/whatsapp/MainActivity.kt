@@ -161,7 +161,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 Log.d("DMA", "Bridging as ${client.whoAmI()} (${client.whichDeviceAmI()}) / ${client.accessToken}")
-                moveToBridgeSync()
+                Handler(this.mainLooper).post {
+                    moveToBridgeSync()
+                }
             }.start()
         }
     }
@@ -172,14 +174,14 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREF_HOMESERVER, MODE_PRIVATE)
 //        prefs.edit()
 //            .putString(PREF_HOMESERVER_URL, "http://172.16.0.111:8338")
-//            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_QAibkboWXqAQGNtXIFTV_18nJ8F")
-//            .putString(PREF_APPSERVICE_TOKEN, "5620tl97s4w28fqngt3u5zjb3g6ejr51")
+//            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_goFfnMzdAKgBjRZvrNeu_2iAnPc")
+//            .putString(PREF_APPSERVICE_TOKEN, "1a12lbw3ffx4gqle2vtq4utk0vjug5t3")
 //            .commit()
         val homeserverUrl = prefs.getString(PREF_HOMESERVER_URL, null)!!
         val accessToken = prefs.getString(PREF_ACCESS_TOKEN, null)!!
         val asToken = prefs.getString(PREF_APPSERVICE_TOKEN, accessToken)!!
         this.matrix = Matrix(
-            "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_QAibkboWXqAQGNtXIFTV_18nJ8F",
+            "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_goFfnMzdAKgBjRZvrNeu_2iAnPc",
             homeserverUrl,
             asToken
         )
