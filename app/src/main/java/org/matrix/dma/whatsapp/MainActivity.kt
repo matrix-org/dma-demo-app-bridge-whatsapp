@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
 
             val uri = contentResolver.insert(MediaStore.Files.getContentUri("external"), attributes)!!
             val stream = contentResolver.openOutputStream(uri)!!
-            stream.write("id: whatsapp\nas_token: '$asToken'\nhs_token: '$hsToken'\nurl: null\nrate_limited: false\nsender_localpart: wa_bot\nnamespaces:\n  users: [{exclusive: true, regex: '@wa_.+'}, {exclusive: false, regex: '@demo:.+'}]\n  aliases: [{exclusive: true, regex: '#gchat_.+'}]\n  rooms: []\n".toByteArray())
+            stream.write("id: whatsapp\nas_token: '$asToken'\nhs_token: '$hsToken'\nurl: null\nrate_limited: false\nsender_localpart: wa_bot\nnamespaces:\n  users: [{exclusive: true, regex: '@wa_.+'}, {exclusive: false, regex: '@demo:.+'}]\n  aliases: [{exclusive: true, regex: '#wa_.+'}]\n  rooms: []\n".toByteArray())
             stream.close()
 
             val shareIntent = Intent.createChooser(Intent().apply {
