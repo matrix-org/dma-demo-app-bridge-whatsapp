@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">WhatsApp DMA Bridge</string>
+    <string name="intro_header">This is a demonstration of bridging WhatsApp to Matrix through a client-side app. Please use a test account to avoid data loss/corruption.</string>
+    <string name="intro_instructions" >To get started, please authenticate yourself with WhatsApp by linking this device. It can be challenging to scan a QR code on the device that also has WhatsApp, so we recommend something like scrcpy and a local screenshot tool to get the QR code scanned.\n\nAn interoperable API wouldn\'t require scanning in this way.\n\nAfter scanning the code and getting succesfully linked in WhatsApp, click the \"Next\" button below.</string>
+    <string name="btn_test_qr_code">Next</string>
+    <string name="btn_refresh_qr_code">Refresh QR Code</string>
+    <string name="toast_whatsapp_code_not_scanned">The WhatsApp QR code does not appear to have been scanned.</string>
 </resources>
