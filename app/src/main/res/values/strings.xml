@@ -5,4 +5,20 @@
     <string name="btn_test_qr_code">Next</string>
     <string name="btn_refresh_qr_code">Refresh QR Code</string>
     <string name="toast_whatsapp_code_not_scanned">The WhatsApp QR code does not appear to have been scanned.</string>
+    <string name="homeserver_intro_header">Awesome! Thanks for logging in. Now we\'re going to set up your homeserver connection.</string>
+    <string name="homeserver_instructions">Currently you need to set up your own homeserver for this demo, however in a proper build this would happen transparently elsewhere.\n\nSome servers, like Synapse, are relatively easy to set up if you haven\'t set one up before. You will need a domain name to use.\n\nOnce your homeserver is running, click the button below to download the appservice registration file, then install it on your homeserver. \n\nThe account it creates is dedicated to this bridge, and will be the same for all the other bridges you set up as part of this demo series.</string>
+    <string name="btn_download_appservice_registration">Download Appservice File</string>
+    <string name="btn_test_appservice">Test Connection</string>
+    <string name="appservice_intro_header">Enter your homeserver URL and test to ensure everything is set up.</string>
+    <string name="appservice_instructions">After you\'ve installed the appservice registration file on your homeserver, enter your public homeserver URL (client-server API) and tap \"test connection\".\n\nThis will create a demo user on your homeserver for your rooms to reside. If successful, all of your WhatsApp chats will be bridged to that account too.\n\nMatrix rooms created on the account will also be bridged back as group chats in WhatsApp.\n\nNormally, this account registration and picking functionality would happen via some other method. Ideally, other users of this bridging app would be able to find already-bridged chats to join (for example, if your friends were bridged then it\'d be ideal to all be using the same Matrix room).</string>
+    <string name="txt_homeserver_url">Homeserver Client-Server API URL</string>
+    <string name="toast_missing_homeserver_url">Please enter a homeserver URL</string>
+    <string name="toast_invalid_homeserver_url">That URL didn\'t work - please try again</string>
+    <string name="initial_sync_intro_header">Looks like everything\'s all set! One moment while the app bridges your accounts…</string>
+    <string name="initial_sync_body">This could take a few minutes if you have lots of chats.</string>
+    <string name="please_wait">Please Wait</string>
+    <string name="sync_from_whatsapp">Getting your chats from WhatsApp</string>
+    <string name="bridging_x_chats">Bridging %1$d chats</string>
+    <string name="syncing_whatsapp">Starting up the WhatsApp sync loop…</string>
+    <string name="syncing_matrix">Starting up the Matrix sync loop…</string>
 </resources>
