@@ -14,6 +14,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import org.json.JSONArray
 import org.json.JSONObject
 import org.matrix.dma.whatsapp.lib.Matrix
 import org.matrix.dma.whatsapp.lib.MatrixCrypto
@@ -192,38 +193,50 @@ class MainActivity : AppCompatActivity() {
             this.mxCrypto = MatrixCrypto(this.matrix!!, applicationInfo.dataDir + "/crypto")
             this.mxCrypto!!.runOnce()
 
-//            val toBridge = this.gchat!!.listDmsAndSpaces()
-//            txtStatus.text = resources.getString(R.string.bridging_x_chats, toBridge.size)
-//            val myId = this.gchat!!.getSelfUserId()
-//            for (gspace in toBridge) {
-//                if (!gspace.hasGroupId()) continue
-//                val existingRoomId = this.matrix!!.findRoomByChatId(gspace.groupId)
-//                if (existingRoomId != null && existingRoomId.isNotEmpty()) {
-//                    Log.d("DMA", "${gspace.groupId} already has room: $existingRoomId")
-//                    continue
-//                }
-//                val roomId = this.matrix!!.createRoom(gspace.roomName, gspace.groupId)!!
-//                val memberships = this.gchat!!.getChatMembers(gspace.groupId)
-//                val joinedNotUs = memberships.toList().filter { m -> m.membershipState == MembershipState.MEMBER_JOINED && !m.id.memberId.userId.equals(myId) }
-//                for (membership in joinedNotUs) {
-//                    val member = this.gchat!!.getMember(membership.id.memberId)
-//                    val mxid = this.matrix!!.createUser(member.user.userId.id, member.user.name)
-//                    this.matrix!!.appserviceJoin(mxid, roomId)
-//
-//                    // Create the crypto stuff for that user too
-//                    val tempAccessToken = prefs.getString(mxid, null)
-//                    var tempClient: Matrix?
-//                    if (tempAccessToken == null) {
-//                        tempClient = this.matrix!!.appserviceLogin(mxid)
-//                        prefs.edit().putString(mxid, tempClient.accessToken!!).commit()
-//                    } else {
-//                        tempClient = Matrix(tempAccessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
-//                    }
-//                    val tempCrypto = MatrixCrypto(tempClient, applicationInfo.dataDir + "/appservice_users/" + tempClient.getLocalpart())
-//                    tempCrypto.runOnce()
-//                    tempCrypto.cleanup()
-//                }
-//            }
+            val oldActingId = this.matrix!!.actingUserId
+            val oldAccessToken = this.matrix!!.accessToken
+            this.matrix!!.actingUserId = this.matrix!!.whoAmI()
+            this.matrix!!.accessToken = asToken
+
+            val toBridge = JSONArray(this.client!!.encodedJoinedGroups)
+            txtStatus.text = resources.getString(R.string.bridging_x_chats, toBridge.length())
+            for (i in 0 until toBridge.length()) {
+                val group = toBridge.getJSONObject(i)
+                val groupId = group.getString("jid")
+                val existingRoomId = this.matrix!!.findRoomByChatId(groupId)
+                if (existingRoomId != null && existingRoomId.isNotEmpty()) {
+                    Log.d("DMA", "$groupId already has room: $existingRoomId")
+                    continue
+                }
+
+                val roomId = this.matrix!!.createRoom(group.optString("name", ""), groupId)!!
+                val members = group.getJSONArray("participants")
+                for (j in 0 until members.length()) {
+                    val member = members.getJSONObject(j)
+                    val memberId = member.getString("jid")
+                    if (this.client!!.isSelf(memberId)) {
+                        continue
+                    }
+
+                    // Checking for ourselves doesn't work, so just bridge straight through
+                    val displayName = this.client!!.getUserDisplayName(memberId)
+                    val mxid = this.matrix!!.createUser(memberId, displayName)
+                    this.matrix!!.appserviceJoin(mxid, roomId)
+
+                    // Create the crypto stuff for that user too
+                    val tempAccessToken = prefs.getString(mxid, null)
+                    var tempClient: Matrix?
+                    if (tempAccessToken == null) {
+                        tempClient = this.matrix!!.appserviceLogin(mxid)
+                        prefs.edit().putString(mxid, tempClient.accessToken!!).commit()
+                    } else {
+                        tempClient = Matrix(tempAccessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
+                    }
+                    val tempCrypto = MatrixCrypto(tempClient, applicationInfo.dataDir + "/appservice_users/" + tempClient.getLocalpart())
+                    tempCrypto.runOnce()
+                    tempCrypto.cleanup()
+                }
+            }
 
             txtStatus.text = resources.getString(R.string.syncing_whatsapp)
 //            this.gchat!!.startLoop()

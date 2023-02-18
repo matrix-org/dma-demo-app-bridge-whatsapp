@@ -5,6 +5,8 @@ import org.json.JSONObject
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
+import java.math.BigInteger
+import java.security.MessageDigest
 import java.util.*
 
 const val HARDCODED_LOCALPART = "demo"
@@ -14,8 +16,14 @@ const val MATRIX_NAMESPACE = "org.matrix.dma.whatsapp"
 class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: String) {
     public var actingUserId: String? = null
 
+    public fun encodeJid(jid: String): String {
+        val md5 = MessageDigest.getInstance("MD5")
+        md5.update(jid.toByteArray())
+        return BigInteger(1, md5.digest()).toString(16)
+    }
+
     public fun createUser(id: String, name: String): String {
-        val localpart = "$HARDCODED_NAMESPACE_PREFIX$id"
+        val localpart = this.getLocalpartForId(id)
         var req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/register${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.asToken}")
@@ -161,7 +169,7 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
             .post(JSONObject()
                 .put("preset", "private_chat")
                 .put("name", name)
-                .put("room_alias_name", this.getAliasLocalpartForId(chatId))
+                .put("room_alias_name", this.getLocalpartForId(chatId))
                 .put("initial_state", JSONArray().put(JSONObject()
                     .put("type", "m.room.encryption")
                     .put("state_key", "")
@@ -172,14 +180,13 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
                     .put("type", MATRIX_NAMESPACE)
                     .put("state_key", "")
                     .put("content", JSONObject()
-//                        .put("space_id", chatId.spaceIdOrNull?.spaceId)
-//                        .put("dm_id", chatId.dmIdOrNull?.dmId)
+                        .put("jid", chatId)
                     )
                 ).put(JSONObject()
                     .put("type", "m.room.topic")
                     .put("state_key", "")
                     .put("content", JSONObject()
-                        .put("topic", "Debugging: ${chatId.toString()}")
+                        .put("topic", "Debugging: $chatId")
                     )
                 ))
                 .toString().toRequestBody(JSON)
@@ -187,15 +194,12 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return this.doRequest(req)?.getString("room_id")
     }
 
-    public fun getAliasLocalpartForId(chatId: String): String {
-//        return if (chatId.spaceIdOrNull != null) "gchat_space_${chatId.spaceId.spaceId}"
-//        else if (chatId.dmIdOrNull != null) "gchat_dm_${chatId.dmId.dmId}"
-//        else throw java.lang.RuntimeException("invalid chat ID: unknown type")
-        return "" // TODO: This
+    public fun getLocalpartForId(id: String): String {
+        return "$HARDCODED_NAMESPACE_PREFIX${this.encodeJid(id)}"
     }
 
     public fun findRoomByChatId(chatId: String): String? {
-        val alias = "%23${this.getAliasLocalpartForId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
+        val alias = "%23${this.getLocalpartForId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
         val req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/directory/room/${alias}${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.accessToken}")
