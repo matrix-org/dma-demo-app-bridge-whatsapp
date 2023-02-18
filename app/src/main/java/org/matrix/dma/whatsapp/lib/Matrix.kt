@@ -208,6 +208,16 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return this.doRequest(req)?.optString("room_id")
     }
 
+    public fun assignChatIdToRoom(chatId: String, roomId: String) {
+        val alias = "%23${this.getLocalpartForId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
+        val req = Request.Builder()
+            .url("${this.homeserverUrl}/_matrix/client/v3/directory/room/${alias}${this.getImpersonationQuery("?")}")
+            .addHeader("Authorization", "Bearer ${this.accessToken}")
+            .put(JSONObject().put("room_id", roomId).toString().toRequestBody(JSON))
+            .build()
+        this.doRequest(req)!!
+    }
+
     public fun sendEvent(event: MatrixEvent, roomId: String): String? {
         // XXX: This annotation should be encrypted. We put it in after encryption for demonstration purposes only.
         event.content.put(MATRIX_NAMESPACE, true) // annotate outbound events for ease of handling later
@@ -318,6 +328,24 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return res
     }
 
+    public fun getRoomState(roomId: String): JSONArray {
+        val req = Request.Builder()
+            .url("${this.homeserverUrl}/_matrix/client/v3/rooms/$roomId/state")
+            .addHeader("Authorization", "Bearer ${this.accessToken}")
+            .get()
+            .build()
+        return JSONArray(HTTP_CLIENT.newCall(req).execute().body!!.string())
+    }
+
+    public fun sendStateEvent(roomId: String, eventType: String, stateKey: String, content: JSONObject): String {
+        val req = Request.Builder()
+            .url("${this.homeserverUrl}/_matrix/client/v3/rooms/$roomId/state/$eventType/$stateKey")
+            .addHeader("Authorization", "Bearer ${this.accessToken}")
+            .put(content.toString().toRequestBody(JSON))
+            .build()
+        return this.doRequest(req)!!.getString("event_id")
+    }
+
     public fun doSync(token: String?, filterId: String): JSONObject {
         val req = Request.Builder()
             // XXX: We set `full_state`, but this will chew through bandwidth on large accounts. We do it to avoid a hit to `GET /state/:eventType`
@@ -347,7 +375,7 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
                 val rooms = res.optJSONObject("rooms")?.optJSONObject("join") ?: continue
                 for (roomId in rooms.keys()) {
                     val room = rooms.getJSONObject(roomId)
-                    val state = room.getJSONObject("state").getJSONArray("events") // ideally this would be more useful, but it isn't (see filter comments above)
+                    val state = this.getRoomState(roomId)
                     var idEvent = this.getStateEvent(roomId, MATRIX_NAMESPACE, "")
                     if (idEvent == null) {
                         idEvent = onRoomCallback(roomId, state)

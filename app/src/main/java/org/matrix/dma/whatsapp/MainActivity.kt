@@ -16,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONArray
 import org.json.JSONObject
+import org.matrix.dma.whatsapp.lib.MATRIX_NAMESPACE
 import org.matrix.dma.whatsapp.lib.Matrix
 import org.matrix.dma.whatsapp.lib.MatrixCrypto
 import whatsmeow.Client
@@ -174,6 +175,9 @@ class MainActivity : AppCompatActivity() {
 
         val prefs = getSharedPreferences(PREF_HOMESERVER, MODE_PRIVATE)
 //        prefs.edit()
+//            .remove("@wa_f65b2070729ae95f7bc77b67b79a5acf:localhost")
+//            .commit()
+//        prefs.edit()
 //            .putString(PREF_HOMESERVER_URL, "http://172.16.0.111:8338")
 //            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_WacRMEsfmhakGzrsjuUW_0XxlE5")
 //            .putString(PREF_APPSERVICE_TOKEN, "1a12lbw3ffx4gqle2vtq4utk0vjug5t3")
@@ -256,8 +260,26 @@ class MainActivity : AppCompatActivity() {
                 }
                 this.client!!.sendTextMessage(chatId, text)
             }, { roomId, state ->
-                Log.d("DMA", "Got room: $roomId\n\n$state")
-                return@startSyncLoop JSONObject()
+                var name = "NoNameRoom"
+                for (i in 0 until state.length()) {
+                    val event = state.getJSONObject(i)
+                    if (event.getString("type") == "m.room.name") {
+                        name = event.getJSONObject("content").optString("name", "NoNameRoom")
+                        break
+                    }
+                }
+
+                if (name.isEmpty()) {
+                    name = roomId
+                }
+
+                Log.d("DMA", "Attempting to assign a new JID to $roomId ($name)")
+                val jid = this.client!!.createGroupEncoded(name)
+                val content = JSONObject().put("jid", jid)
+                this.matrix!!.assignChatIdToRoom(jid, roomId)
+                this.matrix!!.sendStateEvent(roomId, MATRIX_NAMESPACE, "", content)
+                Log.d("DMA", "Assigned $jid to $roomId")
+                return@startSyncLoop content
             })
         }.start()
     }
