@@ -175,14 +175,14 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREF_HOMESERVER, MODE_PRIVATE)
 //        prefs.edit()
 //            .putString(PREF_HOMESERVER_URL, "http://172.16.0.111:8338")
-//            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_goFfnMzdAKgBjRZvrNeu_2iAnPc")
+//            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_WacRMEsfmhakGzrsjuUW_0XxlE5")
 //            .putString(PREF_APPSERVICE_TOKEN, "1a12lbw3ffx4gqle2vtq4utk0vjug5t3")
 //            .commit()
         val homeserverUrl = prefs.getString(PREF_HOMESERVER_URL, null)!!
         val accessToken = prefs.getString(PREF_ACCESS_TOKEN, null)!!
         val asToken = prefs.getString(PREF_APPSERVICE_TOKEN, accessToken)!!
         this.matrix = Matrix(
-            "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_goFfnMzdAKgBjRZvrNeu_2iAnPc",
+            "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_WacRMEsfmhakGzrsjuUW_0XxlE5",
             homeserverUrl,
             asToken
         )
@@ -238,25 +238,32 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            this.matrix!!.actingUserId = oldActingId
+            this.matrix!!.accessToken = oldAccessToken
+
             txtStatus.text = resources.getString(R.string.syncing_whatsapp)
 //            this.gchat!!.startLoop()
 
             txtStatus.text = resources.getString(R.string.syncing_matrix)
-//            this.matrix!!.startSyncLoop(this.mxCrypto!!, { ev, id ->
-//                Log.d("DMA", "Got message: $ev\n\n$id")
-//                val chatId = this.stateIdToChatId(id)
-//                val senderInfo = ev.getJSONObject("X-sender")
-//                var text = ev.getJSONObject("content").getString("body")
-//                if (senderInfo.getString("X-myUserId") != ev.getString("sender")) {
-//                    val displayName = senderInfo.optString("displayname")
-//                    text = (if (displayName.isNotEmpty()) "<$displayName>: " else  "<${ev.getString("sender")}>: ") + text
-//                }
-//                this.gchat?.sendMessage(chatId, text)
-//            }, { roomId, state ->
-//                Log.d("DMA", "Got room: $roomId\n\n$state")
-//                return@startSyncLoop JSONObject()
-//            })
+            this.matrix!!.startSyncLoop(this.mxCrypto!!, { ev, id ->
+                Log.d("DMA", "Got message: $ev\n\n$id")
+                val chatId = this.stateIdToChatId(id)
+                val senderInfo = ev.getJSONObject("X-sender")
+                var text = ev.getJSONObject("content").getString("body")
+                if (senderInfo.getString("X-myUserId") != ev.getString("sender")) {
+                    val displayName = senderInfo.optString("displayname")
+                    text = (if (displayName.isNotEmpty()) "<$displayName>: " else  "<${ev.getString("sender")}>: ") + text
+                }
+                this.client!!.sendTextMessage(chatId, text)
+            }, { roomId, state ->
+                Log.d("DMA", "Got room: $roomId\n\n$state")
+                return@startSyncLoop JSONObject()
+            })
         }.start()
+    }
+
+    private fun stateIdToChatId(id: JSONObject): String {
+        return id.getString("jid")
     }
 
     private fun showInvalidHomeserverUrlToast() {
