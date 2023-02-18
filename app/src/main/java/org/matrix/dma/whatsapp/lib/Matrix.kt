@@ -198,6 +198,10 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return "$HARDCODED_NAMESPACE_PREFIX${this.encodeJid(id)}"
     }
 
+    public fun userIdForRemoteId(id: String): String {
+        return "@${this.getLocalpartForId(id)}:${this.getDomain()}"
+    }
+
     public fun findRoomByChatId(chatId: String): String? {
         val alias = "%23${this.getLocalpartForId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
         val req = Request.Builder()

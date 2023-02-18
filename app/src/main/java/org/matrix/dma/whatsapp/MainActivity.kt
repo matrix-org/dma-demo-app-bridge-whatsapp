@@ -246,7 +246,45 @@ class MainActivity : AppCompatActivity() {
             this.matrix!!.accessToken = oldAccessToken
 
             txtStatus.text = resources.getString(R.string.syncing_whatsapp)
-//            this.gchat!!.startLoop()
+            Thread {
+                this.client!!.setupTimeline()
+                while (this.client!!.isConnected && this.client!!.isLoggedIn) {
+                    val toSend = JSONArray(this.client!!.pollTimeline())
+                    for (i in 0 until toSend.length()) {
+                        val msg = toSend.getJSONObject(i)
+
+                        val chatId = msg.getString("chat_id")
+                        val senderId = msg.getString("sender_id")
+                        val text = msg.getString("message")
+
+                        val roomId = this.matrix!!.findRoomByChatId(chatId)
+                        if (roomId == null) {
+                            Log.w("DMA", "Got message $chatId from $senderId but no bridged room - ignoring")
+                            continue
+                        }
+
+                        if (this.client!!.isSelf(senderId)) {
+                            this.matrix!!.sendEvent(this.mxCrypto!!.encryptEvent(this.matrix!!.makeTextEvent(text), roomId), roomId)
+                        } else {
+                            val mxid = this.matrix!!.userIdForRemoteId(senderId)
+                            val tempAccessToken = prefs.getString(mxid, null)
+                            val tempClient: Matrix
+                            if (tempAccessToken == null) {
+                                tempClient = this.matrix!!.appserviceLogin(mxid)
+                                prefs.edit().putString(mxid, tempClient.accessToken!!).commit()
+                            } else {
+                                tempClient = Matrix(tempAccessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
+                            }
+                            val tempCrypto = MatrixCrypto(tempClient, applicationInfo.dataDir + "/appservice_users/" + tempClient.getLocalpart())
+                            tempCrypto.runOnce()
+                            tempClient.sendEvent(tempCrypto.encryptEvent(tempClient.makeTextEvent(text), roomId), roomId)
+                            tempCrypto.cleanup()
+                        }
+                    }
+
+                    Thread.sleep(10L) // just enough to avoid eating the CPU
+                }
+            }.start()
 
             txtStatus.text = resources.getString(R.string.syncing_matrix)
             this.matrix!!.startSyncLoop(this.mxCrypto!!, { ev, id ->
