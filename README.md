@@ -46,3 +46,5 @@ This is a demo. There is no support.
 Please do! If you're able to fix a bug from above, submit a PR.
 
 Features are less likely to be accepted/looked at, but bug fixes are very much appreciated.
+
+Note that the whatsmeow library is created from a fork: https://github.com/turt2live/whatsmeow
