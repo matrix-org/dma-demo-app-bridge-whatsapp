@@ -21,7 +21,6 @@ for how to structure a project. In future this might be improved, but for now it
 
 ## Known bugs
 
-* [ ] Literally nothing works right now
 * [ ] Performance is awful (there's no real caching anywhere)
 
 ## Deferred features
@@ -29,8 +28,8 @@ for how to structure a project. In future this might be improved, but for now it
 These features are not likely to be added to this *demo application*:
 
 * [ ] Images, threads, reactions, real DMs, etc all should be bridged
-* [ ] Bridge DMs as DMs rather than as rooms
-* [ ] Bridging new DMs and rooms after the initial sync from WhatsApp
+* [ ] Bridge DMs as DMs rather than as group chats
+* [ ] Bridging new DMs and group chats after the initial sync from WhatsApp
 
 ## Building / Installing
 
