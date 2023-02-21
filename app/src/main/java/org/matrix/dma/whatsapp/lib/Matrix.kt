@@ -1,29 +1,17 @@
 package org.matrix.dma.whatsapp.lib
 
 import android.util.Log
-import org.json.JSONObject
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
-import java.math.BigInteger
-import java.security.MessageDigest
+import org.json.JSONObject
 import java.util.*
-
-const val HARDCODED_LOCALPART = "demo"
-const val HARDCODED_NAMESPACE_PREFIX = "wa_"
-const val MATRIX_NAMESPACE = "org.matrix.dma.whatsapp"
 
 class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: String) {
     public var actingUserId: String? = null
 
-    public fun encodeJid(jid: String): String {
-        val md5 = MessageDigest.getInstance("MD5")
-        md5.update(jid.toByteArray())
-        return BigInteger(1, md5.digest()).toString(16)
-    }
-
-    public fun createUser(id: String, name: String): String {
-        val localpart = this.getLocalpartForId(id)
+    public fun createUser(id: UserID, name: String): String {
+        val localpart = getLocalpartForUserId(id)
         var req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/register${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.asToken}")
@@ -152,7 +140,7 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
             .addHeader("Authorization", "Bearer ${this.accessToken}")
             .get()
             .build()
-        return this.doRequest(req)?.optString("user_id")
+        return this.doRequest(req)?.getString("user_id")
     }
 
     public fun whichDeviceAmI(): String? {
@@ -164,14 +152,14 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return this.doRequest(req)?.getString("device_id")
     }
 
-    public fun createRoom(name: String, chatId: String): String? {
+    public fun createRoom(name: String, chatId: ChatID): String? {
         val req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/createRoom${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.accessToken}")
             .post(JSONObject()
                 .put("preset", "private_chat")
                 .put("name", name)
-                .put("room_alias_name", this.getLocalpartForId(chatId))
+                .put("room_alias_name", getLocalpartForChatId(chatId))
                 .put("initial_state", JSONArray().put(JSONObject()
                     .put("type", "m.room.encryption")
                     .put("state_key", "")
@@ -181,14 +169,12 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
                 ).put(JSONObject()
                     .put("type", MATRIX_NAMESPACE)
                     .put("state_key", "")
-                    .put("content", JSONObject()
-                        .put("jid", chatId)
-                    )
+                    .put("content", getIdEventContent(chatId))
                 ).put(JSONObject()
                     .put("type", "m.room.topic")
                     .put("state_key", "")
                     .put("content", JSONObject()
-                        .put("topic", "Debugging: $chatId")
+                        .put("topic", "Debugging: ${chatId.toString()}")
                     )
                 ))
                 .toString().toRequestBody(JSON)
@@ -196,16 +182,12 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return this.doRequest(req)?.getString("room_id")
     }
 
-    public fun getLocalpartForId(id: String): String {
-        return "$HARDCODED_NAMESPACE_PREFIX${this.encodeJid(id)}"
+    public fun userIdForRemoteId(id: UserID): String {
+        return "@${getLocalpartForUserId(id)}:${this.getDomain()!!}"
     }
 
-    public fun userIdForRemoteId(id: String): String {
-        return "@${this.getLocalpartForId(id)}:${this.getDomain()}"
-    }
-
-    public fun findRoomByChatId(chatId: String): String? {
-        val alias = "%23${this.getLocalpartForId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
+    public fun findRoomByChatId(chatId: ChatID): String? {
+        val alias = "%23${getLocalpartForChatId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
         val req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/directory/room/${alias}${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.accessToken}")
@@ -214,8 +196,8 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         return this.doRequest(req)?.optString("room_id")
     }
 
-    public fun assignChatIdToRoom(chatId: String, roomId: String) {
-        val alias = "%23${this.getLocalpartForId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
+    public fun assignChatIdToRoom(chatId: ChatID, roomId: String) {
+        val alias = "%23${getLocalpartForChatId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
         val req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/directory/room/${alias}${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.accessToken}")
@@ -245,7 +227,7 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
         )
     }
 
-    public fun getJoinedUsers(roomId: String): List<String>? {
+    public fun getJoinedUsers(roomId: String): List<String> {
         val req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/rooms/$roomId/joined_members${this.getImpersonationQuery("?")}")
             .addHeader("Authorization", "Bearer ${this.accessToken}")
