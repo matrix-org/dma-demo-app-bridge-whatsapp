@@ -22,6 +22,8 @@ import org.matrix.dma.whatsapp.lib.MatrixCrypto
 import whatsmeow.Client
 import whatsmeow.Whatsmeow
 import java.security.SecureRandom
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 // Buckets
 const val PREF_HOMESERVER = "homeserver"
@@ -228,17 +230,8 @@ class MainActivity : AppCompatActivity() {
                     this.matrix!!.appserviceJoin(mxid, roomId)
 
                     // Create the crypto stuff for that user too
-                    val tempAccessToken = prefs.getString(mxid, null)
-                    var tempClient: Matrix?
-                    if (tempAccessToken == null) {
-                        tempClient = this.matrix!!.appserviceLogin(mxid)
-                        prefs.edit().putString(mxid, tempClient.accessToken!!).commit()
-                    } else {
-                        tempClient = Matrix(tempAccessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
-                    }
-                    val tempCrypto = MatrixCrypto(tempClient, applicationInfo.dataDir + "/appservice_users/" + tempClient.getLocalpart())
-                    tempCrypto.runOnce()
-                    tempCrypto.cleanup()
+                    val tempUser = this.makeTempUser(mxid) // sets up crypto for us
+                    tempUser.crypto.cleanup()
                 }
             }
 
@@ -267,18 +260,9 @@ class MainActivity : AppCompatActivity() {
                             this.matrix!!.sendEvent(this.mxCrypto!!.encryptEvent(this.matrix!!.makeTextEvent(text), roomId), roomId)
                         } else {
                             val mxid = this.matrix!!.userIdForRemoteId(senderId)
-                            val tempAccessToken = prefs.getString(mxid, null)
-                            val tempClient: Matrix
-                            if (tempAccessToken == null) {
-                                tempClient = this.matrix!!.appserviceLogin(mxid)
-                                prefs.edit().putString(mxid, tempClient.accessToken!!).commit()
-                            } else {
-                                tempClient = Matrix(tempAccessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
-                            }
-                            val tempCrypto = MatrixCrypto(tempClient, applicationInfo.dataDir + "/appservice_users/" + tempClient.getLocalpart())
-                            tempCrypto.runOnce()
-                            tempClient.sendEvent(tempCrypto.encryptEvent(tempClient.makeTextEvent(text), roomId), roomId)
-                            tempCrypto.cleanup()
+                            val tempUser = this.makeTempUser(mxid, roomId)
+                            tempUser.client.sendEvent(tempUser.crypto.encryptEvent(tempUser.client.makeTextEvent(text), roomId), roomId)
+                            tempUser.crypto.cleanup()
                         }
                     }
 
@@ -341,4 +325,26 @@ class MainActivity : AppCompatActivity() {
         }
         return builder.toString()
     }
+
+    private fun makeTempUser(mxid: String, roomId: String? = null): TempUser {
+        val prefs = getSharedPreferences(PREF_HOMESERVER, MODE_PRIVATE)
+        val accessToken = prefs.getString(mxid, null)
+        val localpart = Matrix.extractLocalpart(mxid)
+        val dataPath = applicationInfo.dataDir + "/appservice_users/" + localpart
+        val client: Matrix
+        if (accessToken == null || !Path(dataPath).exists()) {
+            client = this.matrix!!.appserviceLogin(mxid)
+            prefs.edit().putString(mxid, client.accessToken!!).commit()
+        } else {
+            client = Matrix(accessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
+        }
+        if (roomId != null) {
+            this.matrix!!.appserviceJoin(mxid, roomId)
+        }
+        val crypto = MatrixCrypto(client, dataPath)
+        crypto.runOnce()
+        return TempUser(client, crypto)
+    }
 }
+
+data class TempUser(val client: Matrix, val crypto: MatrixCrypto)
