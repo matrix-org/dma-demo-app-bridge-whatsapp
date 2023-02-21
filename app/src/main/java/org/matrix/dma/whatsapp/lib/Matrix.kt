@@ -89,7 +89,10 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
                 return this.accessToken
             }
 
+            val origActingUser = this.actingUserId
+            this.actingUserId = null
             val domain = this.getDomain()
+            this.actingUserId = origActingUser
 
             // Do an appservice registration
             var req = Request.Builder()
@@ -149,7 +152,7 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
             .addHeader("Authorization", "Bearer ${this.accessToken}")
             .get()
             .build()
-        return this.doRequest(req)?.getString("user_id")
+        return this.doRequest(req)?.optString("user_id")
     }
 
     public fun whichDeviceAmI(): String? {

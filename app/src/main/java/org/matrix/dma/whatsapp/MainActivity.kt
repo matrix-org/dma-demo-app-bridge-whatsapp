@@ -176,19 +176,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.initial_sync_layout)
 
         val prefs = getSharedPreferences(PREF_HOMESERVER, MODE_PRIVATE)
-//        prefs.edit()
-//            .remove("@wa_f65b2070729ae95f7bc77b67b79a5acf:localhost")
-//            .commit()
-//        prefs.edit()
-//            .putString(PREF_HOMESERVER_URL, "http://172.16.0.111:8338")
-//            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_WacRMEsfmhakGzrsjuUW_0XxlE5")
-//            .putString(PREF_APPSERVICE_TOKEN, "1a12lbw3ffx4gqle2vtq4utk0vjug5t3")
-//            .commit()
+        prefs.edit()
+            .putString(PREF_HOMESERVER_URL, "http://172.16.0.111:8338")
+            .putString(PREF_ACCESS_TOKEN, "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_WacRMEsfmhakGzrsjuUW_0XxlE5")
+            .putString(PREF_APPSERVICE_TOKEN, "1a12lbw3ffx4gqle2vtq4utk0vjug5t3")
+            .commit()
         val homeserverUrl = prefs.getString(PREF_HOMESERVER_URL, null)!!
         val accessToken = prefs.getString(PREF_ACCESS_TOKEN, null)!!
         val asToken = prefs.getString(PREF_APPSERVICE_TOKEN, accessToken)!!
         this.matrix = Matrix(
-            "syt_ZXhhbXBsZV91c2VyXzE2NzYwNjYxOTAxOTI_WacRMEsfmhakGzrsjuUW_0XxlE5",
+            accessToken,
             homeserverUrl,
             asToken
         )
@@ -331,9 +328,14 @@ class MainActivity : AppCompatActivity() {
         val accessToken = prefs.getString(mxid, null)
         val localpart = Matrix.extractLocalpart(mxid)
         val dataPath = applicationInfo.dataDir + "/appservice_users/" + localpart
+
         val client: Matrix
         if (accessToken == null || !Path(dataPath).exists()) {
-            client = this.matrix!!.appserviceLogin(mxid)
+            client = Matrix(this.matrix!!.asToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
+            client.actingUserId = mxid
+            client.accessToken = client.ensureRegistered()
+            client.actingUserId = null
+//            client = this.matrix!!.appserviceLogin(mxid)
             prefs.edit().putString(mxid, client.accessToken!!).commit()
         } else {
             client = Matrix(accessToken, this.matrix!!.homeserverUrl, this.matrix!!.asToken)
