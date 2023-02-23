@@ -17,8 +17,7 @@
     <string name="initial_sync_intro_header">Looks like everything\'s all set! One moment while the app bridges your accounts…</string>
     <string name="initial_sync_body">This could take a few minutes if you have lots of chats.</string>
     <string name="please_wait">Please Wait</string>
-    <string name="sync_from_whatsapp">Getting your chats from WhatsApp</string>
+    <string name="sync_from_remote">Getting your chats from WhatsApp</string>
     <string name="bridging_x_chats">Bridging %1$d chats</string>
-    <string name="syncing_whatsapp">Starting up the WhatsApp sync loop…</string>
-    <string name="syncing_matrix">Starting up the Matrix sync loop…</string>
+    <string name="syncing">Starting up the WhatsApp and Matrix sync loops…</string>
 </resources>
