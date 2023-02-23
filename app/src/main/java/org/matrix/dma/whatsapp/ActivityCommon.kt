@@ -32,7 +32,7 @@ fun moveToHomeserverSetup(app: MainActivity) {
     val downloadRegistrationButton = app.findViewById<Button>(R.id.btnDownloadRegistration)
     downloadRegistrationButton.setOnClickListener {
         val attributes = ContentValues()
-        attributes.put(MediaStore.MediaColumns.DISPLAY_NAME, "googlechat.yaml")
+        attributes.put(MediaStore.MediaColumns.DISPLAY_NAME, "$HARDCODED_APPSERVICE_ID.yaml")
         attributes.put(MediaStore.MediaColumns.MIME_TYPE, "text/yaml")
 
         val asToken = randomString(32)
@@ -52,7 +52,7 @@ fun moveToHomeserverSetup(app: MainActivity) {
         val shareIntent = Intent.createChooser(Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "googlechat.yaml")
+            putExtra(Intent.EXTRA_SUBJECT, "$HARDCODED_APPSERVICE_ID.yaml")
             type = "text/plain"
         }, null)
         app.startActivity(shareIntent)
