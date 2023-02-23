@@ -91,7 +91,7 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
                 )
                 .build()
             var res = this.doRequest(req)!!
-            if (res.getString("errcode") == "M_USER_IN_USE") {
+            if (res.optString("errcode") == "M_USER_IN_USE") {
                 // Okay, try to log in
                 req = Request.Builder()
                     .url("${this.homeserverUrl}/_matrix/client/v3/login${this.getImpersonationQuery("?")}")
@@ -195,6 +195,10 @@ class Matrix(var accessToken: String?, val homeserverUrl: String, val asToken: S
     }
 
     public fun assignChatIdToRoom(chatId: ChatID, roomId: String) {
+        if (this.accessToken != this.asToken || this.actingUserId != null) {
+            Matrix(this.asToken, this.homeserverUrl, this.asToken).assignChatIdToRoom(chatId, roomId)
+            return
+        }
         val alias = "%23${getLocalpartForChatId(chatId)}:${this.getDomain()}" // XXX: We should just escape properly...
         val req = Request.Builder()
             .url("${this.homeserverUrl}/_matrix/client/v3/directory/room/${alias}${this.getImpersonationQuery("?")}")

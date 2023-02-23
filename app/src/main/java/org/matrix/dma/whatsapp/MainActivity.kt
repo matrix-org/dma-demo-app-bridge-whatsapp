@@ -86,7 +86,6 @@ class MainActivity : AppCompatActivity() {
         // no-op: already done
     }
 
-
     internal fun bridgeRemoteToMatrix() {
         val txtStatus = this.findViewById<TextView>(R.id.txtStatus)
         val toBridge = JSONArray(this.client!!.encodedJoinedGroups)
@@ -94,13 +93,8 @@ class MainActivity : AppCompatActivity() {
         for (i in 0 until toBridge.length()) {
             val group = toBridge.getJSONObject(i)
             val groupId = group.getString("jid")
-            val existingRoomId = this.matrix!!.findRoomByChatId(groupId)
-            if (existingRoomId != null && existingRoomId.isNotEmpty()) {
-                Log.d("DMA", "$groupId already has room: $existingRoomId")
-                continue
-            }
+            val roomId = getOrMakeRoom(this, groupId, group.optString("name", groupId))
 
-            val roomId = this.matrix!!.createRoom(group.optString("name", ""), groupId)!!
             val members = group.getJSONArray("participants")
             for (j in 0 until members.length()) {
                 val member = members.getJSONObject(j)
