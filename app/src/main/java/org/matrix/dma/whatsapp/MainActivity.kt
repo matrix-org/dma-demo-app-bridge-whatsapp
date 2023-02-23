@@ -1,31 +1,20 @@
 package org.matrix.dma.whatsapp
 
-import android.content.ContentValues
-import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
-import android.provider.MediaStore
-import android.util.Base64
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONArray
-import org.json.JSONObject
 import org.matrix.dma.whatsapp.lib.ChatID
-import org.matrix.dma.whatsapp.lib.MATRIX_NAMESPACE
 import org.matrix.dma.whatsapp.lib.Matrix
 import org.matrix.dma.whatsapp.lib.MatrixCrypto
 import whatsmeow.Client
 import whatsmeow.Whatsmeow
-import java.security.SecureRandom
 import kotlin.concurrent.thread
-import kotlin.io.path.Path
-import kotlin.io.path.exists
 
 // Buckets
 const val PREF_HOMESERVER = "homeserver"
